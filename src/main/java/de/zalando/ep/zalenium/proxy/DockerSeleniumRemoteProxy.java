@@ -52,7 +52,6 @@ import de.zalando.ep.zalenium.matcher.DockerSeleniumCapabilityMatcher;
 import de.zalando.ep.zalenium.matcher.ZaleniumCapabilityType;
 import de.zalando.ep.zalenium.util.CommonProxyUtilities;
 import de.zalando.ep.zalenium.util.Environment;
-import de.zalando.ep.zalenium.util.GoogleAnalyticsApi;
 
 /*
     The implementation of this class was inspired on https://gist.github.com/krmahadevan/4649607
@@ -94,7 +93,6 @@ public class DockerSeleniumRemoteProxy extends DefaultRemoteProxy {
     private String testBuild;
     private String testName;
     private TestInformation testInformation;
-    private GoogleAnalyticsApi ga = new GoogleAnalyticsApi();
     private CapabilityMatcher capabilityHelper;
     private long lastCommandTime = 0;
     private long cleanupStartedTime = 0;
@@ -390,9 +388,6 @@ public class DockerSeleniumRemoteProxy extends DefaultRemoteProxy {
         try {
             // This means that the shutdown command was triggered before receiving this afterSession command
             if (!TestInformation.TestStatus.TIMEOUT.equals(testInformation.getTestStatus())) {
-                long executionTime = (System.currentTimeMillis() - session.getSlot().getLastSessionStart()) / 1000;
-                ga.testEvent(DockerSeleniumRemoteProxy.class.getName(), session.getRequestedCapabilities().toString(),
-                        executionTime);
                 if (isTestSessionLimitReached()) {
                     LOGGER.info("Session {} completed. Node should shutdown soon...", session.getInternalKey());
                     cleanupNode(true);
@@ -542,9 +537,6 @@ public class DockerSeleniumRemoteProxy extends DefaultRemoteProxy {
     protected void terminateIdleTest() {
         for (TestSlot testSlot : getTestSlots()) {
             if (testSlot.getSession() != null) {
-                long executionTime = (System.currentTimeMillis() - testSlot.getLastSessionStart()) / 1000;
-                ga.testEvent(DockerSeleniumRemoteProxy.class.getName(), testSlot.getSession().getRequestedCapabilities().toString(),
-                        executionTime);
                 getRegistry().forceRelease(testSlot, SessionTerminationReason.ORPHAN);
             }
         }
@@ -563,7 +555,6 @@ public class DockerSeleniumRemoteProxy extends DefaultRemoteProxy {
                 processContainerAction(action, getContainerId());
             } catch (Exception e) {
                 LOGGER.error(e.toString(), e);
-                ga.trackException(e);
             }
         } else {
             LOGGER.debug("{}: Video recording is disabled", action.getContainerAction());
@@ -650,7 +641,6 @@ public class DockerSeleniumRemoteProxy extends DefaultRemoteProxy {
             } else {
                 LOGGER.warn("Error while copying the video", e);
             }
-            ga.trackException(e);
         } finally {
             if (!videoWasCopied) {
         		testInformation.setVideoRecorded(false);
@@ -693,7 +683,6 @@ public class DockerSeleniumRemoteProxy extends DefaultRemoteProxy {
             } else {
                 LOGGER.debug("Error while copying the logs", e);
             }
-            ga.trackException(e);
         }
         setThreadName(currentName);
     }

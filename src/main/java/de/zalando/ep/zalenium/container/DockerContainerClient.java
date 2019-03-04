@@ -43,7 +43,6 @@ import com.spotify.docker.client.messages.NetworkSettings;
 
 import de.zalando.ep.zalenium.proxy.DockeredSeleniumStarter;
 import de.zalando.ep.zalenium.util.Environment;
-import de.zalando.ep.zalenium.util.GoogleAnalyticsApi;
 
 import static com.spotify.docker.client.DockerClient.ListContainersParam.withStatusCreated;
 import static com.spotify.docker.client.DockerClient.ListContainersParam.withStatusRunning;
@@ -80,7 +79,6 @@ public class DockerContainerClient implements ContainerClient {
     }
 
     private final Logger logger = LoggerFactory.getLogger(DockerContainerClient.class.getName());
-    private final GoogleAnalyticsApi ga = new GoogleAnalyticsApi();
     private DockerClient dockerClient = new DefaultDockerClient(dockerHost);
     private String nodeId;
     private String zaleniumNetwork;
@@ -157,7 +155,6 @@ public class DockerContainerClient implements ContainerClient {
             containerList = dockerClient.listContainers(withStatusRunning(), withStatusCreated());
         } catch (DockerException | InterruptedException e) {
             logger.debug(nodeId + " Error while getting containerId", e);
-            ga.trackException(e);
         }
 
         if (containerList != null) {
@@ -176,7 +173,6 @@ public class DockerContainerClient implements ContainerClient {
                                         .anyMatch(port -> port.equalsIgnoreCase(String.valueOf(remoteUrl.getPort())));
                             } catch (DockerException | InterruptedException e) {
                                 logger.debug(nodeId + " Error while getting containerId", e);
-                                ga.trackException(e);
                             }
                         }
                         NetworkSettings networkSettings = container.networkSettings();
@@ -199,7 +195,6 @@ public class DockerContainerClient implements ContainerClient {
             containerList = dockerClient.listContainers(withStatusRunning(), withStatusCreated());
         } catch (DockerException | InterruptedException e) {
             logger.debug(nodeId + " Error while getting containerId", e);
-            ga.trackException(e);
         }
 
         if (containerList != null) {
@@ -231,7 +226,6 @@ public class DockerContainerClient implements ContainerClient {
             logger.debug("Container {} does not exist - already shut down?.", containerId);
         } catch (DockerException | InterruptedException e) {
             logger.warn(nodeId + " Error while stopping the container", e);
-            ga.trackException(e);
         }
     }
 
@@ -249,12 +243,10 @@ public class DockerContainerClient implements ContainerClient {
                     logger.debug(String.format("%s %s", nodeId, commandOutput));
                 } catch (Exception e) {
                     logger.debug(nodeId + " Error while executing the output.readFully()", e);
-                    ga.trackException(e);
                 }
             }
         } catch (DockerException | InterruptedException | NullPointerException e) {
             logger.debug(nodeId + " Error while executing the command", e);
-            ga.trackException(e);
         }
     }
 
@@ -275,7 +267,6 @@ public class DockerContainerClient implements ContainerClient {
             return images.get(0).repoTags().get(0);
         } catch (DockerException | InterruptedException e) {
             logger.warn(nodeId + " Error while executing the command", e);
-            ga.trackException(e);
         }
         return imageName;
     }
@@ -382,7 +373,6 @@ public class DockerContainerClient implements ContainerClient {
             }
         } catch (DockerException | InterruptedException e) {
             logger.warn(nodeId + " Error while checking (and pulling) if the image is present", e);
-            ga.trackException(e);
         }
 
         try {
@@ -396,11 +386,9 @@ public class DockerContainerClient implements ContainerClient {
             }
 
             logger.warn(nodeId + " Error while starting a new container", e);
-            ga.trackException(e);
             return new ContainerCreationStatus(false);
         } catch (DockerException | InterruptedException e) {
             logger.warn(nodeId + " Error while starting a new container", e);
-            ga.trackException(e);
             return new ContainerCreationStatus(false);
         }
     }
@@ -423,7 +411,6 @@ public class DockerContainerClient implements ContainerClient {
                 }
             } catch (Exception e) {
                 logger.warn(nodeId + " Error while retrieving the added labels for the Selenium containers.", e);
-                ga.trackException(e);
             }
         }
     }
@@ -448,7 +435,6 @@ public class DockerContainerClient implements ContainerClient {
                 isZaleniumPrivileged = containerInfo.hostConfig().privileged();
             } catch (DockerException | InterruptedException e) {
                 logger.warn(nodeId + " Error while getting value to check if Zalenium is running in privileged mode.", e);
-                ga.trackException(e);
             }
         }
     }
@@ -467,7 +453,6 @@ public class DockerContainerClient implements ContainerClient {
                 storageOpt = containerInfo.hostConfig().storageOpt();
             } catch (DockerException | InterruptedException e) {
                 logger.warn(nodeId + " Error while getting value to use passed storageOpts.", e);
-                ga.trackException(e);
             }
         }
     }
@@ -485,7 +470,6 @@ public class DockerContainerClient implements ContainerClient {
                 containerInfo = dockerClient.inspectContainer(containerId);
             } catch (DockerException | InterruptedException e) {
                 logger.warn(nodeId + " Error while getting mounted folders and env vars.", e);
-                ga.trackException(e);
             }
 
             loadMountedFolders(containerInfo);
@@ -533,7 +517,6 @@ public class DockerContainerClient implements ContainerClient {
             zaleniumExtraHosts = containerInfo.hostConfig().extraHosts();
         } catch (DockerException | InterruptedException | NullPointerException e) {
             logger.debug(nodeId + " Error while getting Zalenium extra hosts.", e);
-            ga.trackException(e);
         }
         return Optional.ofNullable(zaleniumExtraHosts).orElse(new ArrayList<>());
     }
@@ -562,7 +545,6 @@ public class DockerContainerClient implements ContainerClient {
                     .forEach(container -> stopContainer(container.id()));
         } catch (Exception e) {
             logger.warn(nodeId + " Error while deleting existing DockerSelenium containers", e);
-            ga.trackException(e);
         }
     }
 
@@ -605,7 +587,6 @@ public class DockerContainerClient implements ContainerClient {
             }
         } catch (DockerException | InterruptedException | NullPointerException e) {
             logger.debug(nodeId + " Error while getting Zalenium network. Falling back to default.", e);
-            ga.trackException(e);
         }
         zaleniumNetwork = DEFAULT_DOCKER_NETWORK_MODE;
         return zaleniumNetwork;
@@ -626,7 +607,6 @@ public class DockerContainerClient implements ContainerClient {
             return containerInfo.networkSettings().ipAddress();
         } catch (DockerException | InterruptedException e) {
             logger.debug(nodeId + " Error while getting the container IP.", e);
-            ga.trackException(e);
         }
         return null;
     }

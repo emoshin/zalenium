@@ -102,7 +102,6 @@ public class BrowserStackRemoteProxyTest {
         objectName = new ObjectName("org.seleniumhq.grid:type=RemoteProxy,node=\"http://localhost:30000\"");
         new JMXHelper().unregister(objectName);
         BrowserStackRemoteProxy.restoreCommonProxyUtilities();
-        BrowserStackRemoteProxy.restoreGa();
         BrowserStackRemoteProxy.restoreEnvironment();
     }
 
@@ -213,7 +212,6 @@ public class BrowserStackRemoteProxyTest {
 
         } finally {
             BrowserStackRemoteProxy.restoreCommonProxyUtilities();
-            BrowserStackRemoteProxy.restoreGa();
             BrowserStackRemoteProxy.restoreEnvironment();
             Dashboard.restoreCommonProxyUtilities();
         }

@@ -15,7 +15,6 @@ import de.zalando.ep.zalenium.matcher.ZaleniumCapabilityMatcher;
 import de.zalando.ep.zalenium.servlet.renderer.CloudProxyHtmlRenderer;
 import de.zalando.ep.zalenium.util.CommonProxyUtilities;
 import de.zalando.ep.zalenium.util.Environment;
-import de.zalando.ep.zalenium.util.GoogleAnalyticsApi;
 import org.apache.commons.io.FileUtils;
 import org.openqa.grid.common.RegistrationRequest;
 import org.openqa.grid.internal.GridRegistry;
@@ -55,10 +54,8 @@ public class CloudTestingRemoteProxy extends DefaultRemoteProxy {
     @VisibleForTesting
     public static boolean addToDashboardCalled = false;
     private static final Logger logger = LoggerFactory.getLogger(CloudTestingRemoteProxy.class.getName());
-    private static final GoogleAnalyticsApi defaultGA = new GoogleAnalyticsApi();
     private static final CommonProxyUtilities defaultCommonProxyUtilities = new CommonProxyUtilities();
     private static final Environment defaultEnvironment = new Environment();
-    private static GoogleAnalyticsApi ga = defaultGA;
     private static CommonProxyUtilities commonProxyUtilities = defaultCommonProxyUtilities;
     private static Environment env = defaultEnvironment;
     private final HtmlRenderer renderer = new CloudProxyHtmlRenderer(this);
@@ -70,20 +67,6 @@ public class CloudTestingRemoteProxy extends DefaultRemoteProxy {
     @SuppressWarnings("WeakerAccess")
     public CloudTestingRemoteProxy(RegistrationRequest request, GridRegistry registry) {
         super(request, registry);
-    }
-
-    protected static GoogleAnalyticsApi getGa() {
-        return ga;
-    }
-
-    @VisibleForTesting
-    static void setGa(GoogleAnalyticsApi ga) {
-        CloudTestingRemoteProxy.ga = ga;
-    }
-
-    @VisibleForTesting
-    static void restoreGa() {
-        ga = defaultGA;
     }
 
     protected static CommonProxyUtilities getCommonProxyUtilities() {
@@ -207,8 +190,6 @@ public class CloudTestingRemoteProxy extends DefaultRemoteProxy {
             WebDriverRequest seleniumRequest = (WebDriverRequest) request;
             if (seleniumRequest.getRequestType().equals(RequestType.STOP_SESSION)) {
                 long executionTime = (System.currentTimeMillis() - session.getSlot().getLastSessionStart()) / 1000;
-                getGa().testEvent(getProxyClassName(), session.getRequestedCapabilities().toString(),
-                        executionTime);
                 addTestToDashboard(session.getExternalKey().getKey(), true);
             }
         }
@@ -315,7 +296,6 @@ public class CloudTestingRemoteProxy extends DefaultRemoteProxy {
             return new URL(getCloudTestingServiceUrl());
         } catch (MalformedURLException e) {
             logger.error(e.toString(), e);
-            getGa().trackException(e);
         }
         return null;
     }
@@ -376,9 +356,6 @@ public class CloudTestingRemoteProxy extends DefaultRemoteProxy {
         for (TestSlot testSlot : getTestSlots()) {
             if (testSlot.getSession() != null &&
                     (testSlot.getSession().getInactivityTime() >= (getMaxTestIdleTime() * 1000L))) {
-                long executionTime = (System.currentTimeMillis() - testSlot.getLastSessionStart()) / 1000;
-                getGa().testEvent(getProxyClassName(), testSlot.getSession().getRequestedCapabilities().toString(),
-                        executionTime);
                 // If it is null, it is probable that the test never reached the cloud service.
                 if (testSlot.getSession().getExternalKey() != null) {
                     addTestToDashboard(testSlot.getSession().getExternalKey().getKey(), false);
