@@ -54,7 +54,6 @@ public class SauceLabsRemoteProxy extends CloudTestingRemoteProxy {
                     SAUCE_LABS_PROXY_NAME);
         } catch (Exception e) {
             LOGGER.warn(e.toString(), e);
-            getGa().trackException(e);
         }
         Thread.currentThread().setName(currentName);
         return addCapabilitiesToRegistrationRequest(registrationRequest, 1, SAUCE_LABS_PROXY_NAME);

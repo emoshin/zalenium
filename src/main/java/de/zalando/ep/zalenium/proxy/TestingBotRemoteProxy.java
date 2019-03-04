@@ -51,7 +51,6 @@ public class TestingBotRemoteProxy extends CloudTestingRemoteProxy {
                     TESTINGBOT_PROXY_NAME);
         } catch (Exception e) {
             logger.error(e.toString(), e);
-            getGa().trackException(e);
         }
         Thread.currentThread().setName(currentName);
         return addCapabilitiesToRegistrationRequest(registrationRequest, 1, TESTINGBOT_PROXY_NAME);
